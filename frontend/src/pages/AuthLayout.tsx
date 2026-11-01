@@ -16,7 +16,7 @@ export function AuthLayout({ tagline, points, children }: { tagline: string; poi
       <div className="pointer-events-none absolute -right-40 -bottom-48 size-[30rem] rounded-full bg-[var(--halo-2)] blur-3xl" aria-hidden />
 
       <div className="relative mx-auto grid min-h-dvh w-full max-w-[1240px] lg:grid-cols-[1.1fr_1fr]">
-        <section className="hidden flex-col justify-between p-10 lg:flex xl:p-14" aria-label="Présentation de TASKORA">
+        <section className="hidden flex-col justify-between gap-8 p-10 lg:flex xl:p-14" aria-label="Présentation de TASKORA">
           <Logo />
           <div className="max-w-lg">
             <h2 className="text-[40px] leading-[1.12] font-bold text-ink xl:text-[46px]">
@@ -32,8 +32,8 @@ export function AuthLayout({ tagline, points, children }: { tagline: string; poi
               ))}
             </ul>
           </div>
-          <div className="glass relative -mx-4 rounded-[28px] p-4">
-            <AuthIllustration className="w-full" />
+          <div className="glass relative max-w-[440px] rounded-[28px] p-4">
+            <AuthIllustration className="mx-auto max-h-[34vh] w-full" />
           </div>
         </section>
 

@@ -8,7 +8,9 @@ import { civil, createTask, register } from './helpers';
 test.skip(!process.env.CAPTURE, 'Captures uniquement sur demande (CAPTURE=1)');
 
 const OUT = '../docs/screenshots';
-const VIEWPORTS = { desktop: { width: 1440, height: 900 }, tablet: { width: 820, height: 1100 }, mobile: { width: 390, height: 844 } };
+// Captures à la taille de l'écran (sans pleine page) : sidebar et barre mobile fixes restent fidèles.
+const VIEWPORTS = { desktop: { width: 1440, height: 1240 }, tablet: { width: 820, height: 1180 }, mobile: { width: 390, height: 844 } };
+const AUTH = { width: 1440, height: 900 };
 
 async function seed(page: Page) {
   await register(page, 'Camille Martin');
@@ -25,12 +27,16 @@ for (const theme of ['light', 'dark'] as const) {
   test(`captures ${theme}`, async ({ page }) => {
     test.setTimeout(120_000);
     await page.emulateMedia({ colorScheme: theme, reducedMotion: 'reduce' });
-    await page.setViewportSize(VIEWPORTS.desktop);
+    await page.setViewportSize(AUTH);
     await page.goto('/connexion');
     await page.getByRole('heading', { name: 'Bon retour sur TASKORA' }).waitFor();
     await page.screenshot({ path: `${OUT}/${theme}-desktop-connexion.png` });
     await page.setViewportSize(VIEWPORTS.mobile);
-    await page.screenshot({ path: `${OUT}/${theme}-mobile-connexion.png`, fullPage: true });
+    await page.screenshot({ path: `${OUT}/${theme}-mobile-connexion.png` });
+    await page.setViewportSize(AUTH);
+    await page.goto('/inscription');
+    await page.getByRole('heading', { name: 'Créez votre espace TASKORA' }).waitFor();
+    await page.screenshot({ path: `${OUT}/${theme}-desktop-inscription.png` });
     await page.setViewportSize(VIEWPORTS.desktop);
     await seed(page);
 
@@ -38,32 +44,37 @@ for (const theme of ['light', 'dark'] as const) {
       await page.setViewportSize(size);
       await page.goto('/tableau-de-bord');
       await page.getByText('Progression globale').waitFor();
-      await page.screenshot({ path: `${OUT}/${theme}-${name}-dashboard.png`, fullPage: true });
+      await page.screenshot({ path: `${OUT}/${theme}-${name}-dashboard.png` });
       await page.goto('/taches');
       await page.getByRole('article').first().waitFor();
-      await page.screenshot({ path: `${OUT}/${theme}-${name}-liste.png`, fullPage: true });
+      await page.screenshot({ path: `${OUT}/${theme}-${name}-liste.png` });
       await page.goto('/taches?vue=kanban');
       await page.locator('[data-column="DONE"] article').first().waitFor();
-      await page.screenshot({ path: `${OUT}/${theme}-${name}-kanban.png`, fullPage: name !== 'mobile' });
+      await page.screenshot({ path: `${OUT}/${theme}-${name}-kanban.png` });
       await page.goto('/profil');
       await page.getByRole('heading', { name: 'Sécurité' }).waitFor();
-      await page.screenshot({ path: `${OUT}/${theme}-${name}-profil.png`, fullPage: true });
+      await page.screenshot({ path: `${OUT}/${theme}-${name}-profil.png` });
     }
 
-    await page.setViewportSize(VIEWPORTS.desktop);
+    await page.setViewportSize(AUTH);
     await page.goto('/taches');
     await page.getByRole('button', { name: 'Préparer la présentation du projet', exact: true }).click();
     await page.getByRole('dialog', { name: 'Détails de la tâche' }).waitFor();
     await page.screenshot({ path: `${OUT}/${theme}-desktop-drawer.png` });
     await page.keyboard.press('Escape');
     await page.getByRole('main').getByRole('button', { name: 'Nouvelle tâche' }).click();
+    const modal = page.getByRole('dialog', { name: 'Nouvelle tâche' });
+    await modal.getByLabel('Titre de la tâche').fill('Préparer la démo client');
+    await modal.getByLabel('Priorité').selectOption({ label: 'Haute' });
     await page.screenshot({ path: `${OUT}/${theme}-desktop-modale.png` });
     await page.setViewportSize(VIEWPORTS.mobile);
     await page.screenshot({ path: `${OUT}/${theme}-mobile-modale.png` });
-    await page.keyboard.press('Escape');
+    await modal.getByRole('button', { name: 'Annuler' }).click();
+    await page.getByRole('alertdialog').getByRole('button', { name: 'Abandonner' }).click();
+    await modal.waitFor({ state: 'hidden' });
     await page.getByLabel('Rechercher une tâche').fill('zzzz');
     await page.getByText('Aucune tâche trouvée').waitFor();
-    await page.setViewportSize(VIEWPORTS.desktop);
+    await page.setViewportSize(AUTH);
     await page.screenshot({ path: `${OUT}/${theme}-desktop-aucun-resultat.png` });
   });
 }
