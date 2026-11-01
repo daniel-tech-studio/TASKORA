@@ -1,0 +1,315 @@
+@import 'tailwindcss';
+
+/* Le thème est piloté par l'attribut data-theme posé sur <html> (voir index.html et theme.tsx). */
+@custom-variant dark (&:where([data-theme='dark'], [data-theme='dark'] *));
+
+/* ------------------------------------------------------------------------------------------
+   Tokens sémantiques — llm.md 3.2 / 3.3 (palette Violet Serenity, clair et sombre).
+   ------------------------------------------------------------------------------------------ */
+:root {
+  color-scheme: light;
+  --bg-app: #f7f8fc;
+  --bg-surface: #ffffff;
+  --bg-elevated: #ffffff;
+  --bg-sunken: #eff1f8;
+  --text-primary: #1c2440;
+  --text-secondary: #626e86;
+  --text-tertiary: #7b869c;
+  --border-default: #e6e8f2;
+  --border-strong: #d3d7e6;
+  --primary: #6757e8;
+  --primary-strong: #5443d6;
+  --primary-on: #ffffff;
+  --primary-soft: #eeebff;
+  --primary-soft-text: #4b3cc4;
+  --lavender: #a99cf4;
+  --focus-ring: #6757e8;
+  --success: #178764;
+  --success-soft: #e3f6ee;
+  --warning: #a86e13;
+  --warning-soft: #fdf1dc;
+  --danger: #c53f55;
+  --danger-soft: #fde8ec;
+  --info: #2f6dcf;
+  --info-soft: #e5eefc;
+  --neutral-soft: #eef0f6;
+  --overlay: rgb(17 20 38 / 0.42);
+  --halo-1: rgb(103 87 232 / 0.22);
+  --halo-2: rgb(169 156 244 / 0.28);
+  --glass: rgb(255 255 255 / 0.62);
+  --glass-border: rgb(255 255 255 / 0.75);
+  --shadow-color: 28 36 64;
+  --shadow-sm: 0 1px 2px rgb(var(--shadow-color) / 0.06), 0 1px 1px rgb(var(--shadow-color) / 0.03);
+  --shadow-md: 0 2px 4px rgb(var(--shadow-color) / 0.04), 0 8px 20px -6px rgb(var(--shadow-color) / 0.1);
+  --shadow-lg: 0 4px 8px rgb(var(--shadow-color) / 0.04), 0 24px 48px -12px rgb(var(--shadow-color) / 0.2);
+  --shadow-brand: 0 6px 18px -6px rgb(103 87 232 / 0.55);
+}
+
+[data-theme='dark'] {
+  color-scheme: dark;
+  --bg-app: #111426;
+  --bg-surface: #1c2440;
+  --bg-elevated: #252d4b;
+  --bg-sunken: #161b33;
+  --text-primary: #f5f6ff;
+  --text-secondary: #b7bed5;
+  --text-tertiary: #959dba;
+  --border-default: #39425e;
+  --border-strong: #4a5476;
+  --primary: #a99cf4;
+  --primary-strong: #c0b6fa;
+  --primary-on: #17152b;
+  --primary-soft: #342e59;
+  --primary-soft-text: #d6cffd;
+  --lavender: #c7bcff;
+  --focus-ring: #c7bcff;
+  --success: #4dd5a4;
+  --success-soft: rgb(77 213 164 / 0.14);
+  --warning: #f4c46b;
+  --warning-soft: rgb(244 196 107 / 0.14);
+  --danger: #ff8795;
+  --danger-soft: rgb(255 135 149 / 0.14);
+  --info: #86b8ff;
+  --info-soft: rgb(134 184 255 / 0.14);
+  --neutral-soft: rgb(183 190 213 / 0.12);
+  --overlay: rgb(5 7 18 / 0.66);
+  --halo-1: rgb(124 108 240 / 0.3);
+  --halo-2: rgb(169 156 244 / 0.16);
+  --glass: rgb(37 45 75 / 0.55);
+  --glass-border: rgb(169 156 244 / 0.18);
+  --shadow-color: 0 0 0;
+  --shadow-sm: 0 1px 2px rgb(0 0 0 / 0.3);
+  --shadow-md: 0 2px 6px rgb(0 0 0 / 0.25), 0 10px 24px -8px rgb(0 0 0 / 0.45);
+  --shadow-lg: 0 6px 12px rgb(0 0 0 / 0.3), 0 28px 56px -12px rgb(0 0 0 / 0.6);
+  --shadow-brand: 0 8px 22px -8px rgb(124 108 240 / 0.7);
+}
+
+@theme inline {
+  --font-display: 'Sora', ui-sans-serif, system-ui, sans-serif;
+  --font-sans: 'DM Sans', ui-sans-serif, system-ui, sans-serif;
+
+  --color-app: var(--bg-app);
+  --color-surface: var(--bg-surface);
+  --color-elevated: var(--bg-elevated);
+  --color-sunken: var(--bg-sunken);
+  --color-ink: var(--text-primary);
+  --color-muted: var(--text-secondary);
+  --color-subtle: var(--text-tertiary);
+  --color-line: var(--border-default);
+  --color-line-strong: var(--border-strong);
+  --color-brand: var(--primary);
+  --color-brand-strong: var(--primary-strong);
+  --color-brand-on: var(--primary-on);
+  --color-brand-soft: var(--primary-soft);
+  --color-brand-soft-ink: var(--primary-soft-text);
+  --color-lavender: var(--lavender);
+  --color-ring: var(--focus-ring);
+  --color-success: var(--success);
+  --color-success-soft: var(--success-soft);
+  --color-warning: var(--warning);
+  --color-warning-soft: var(--warning-soft);
+  --color-danger: var(--danger);
+  --color-danger-soft: var(--danger-soft);
+  --color-info: var(--info);
+  --color-info-soft: var(--info-soft);
+  --color-neutral-soft: var(--neutral-soft);
+  --color-navy: #1c2440;
+
+  --shadow-soft-sm: var(--shadow-sm);
+  --shadow-soft-md: var(--shadow-md);
+  --shadow-soft-lg: var(--shadow-lg);
+  --shadow-brand: var(--shadow-brand);
+
+  --radius-card: 16px;
+  --radius-panel: 20px;
+
+  --ease-out-soft: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-in-soft: cubic-bezier(0.4, 0, 1, 1);
+}
+
+/* ------------------------------------------------------------------------------------------
+   Base
+   ------------------------------------------------------------------------------------------ */
+@layer base {
+  html {
+    -webkit-text-size-adjust: 100%;
+    text-rendering: optimizeLegibility;
+  }
+  body {
+    background: var(--bg-app);
+    color: var(--text-primary);
+    font-family: var(--font-sans);
+    font-size: 15px;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    transition: background-color 220ms ease, color 220ms ease;
+  }
+  h1,
+  h2,
+  h3 {
+    font-family: var(--font-display);
+    line-height: 1.25;
+    letter-spacing: -0.01em;
+  }
+  :focus-visible {
+    outline: 2px solid var(--focus-ring);
+    outline-offset: 2px;
+  }
+  button,
+  [role='button'],
+  label[for],
+  select {
+    cursor: pointer;
+  }
+  button:disabled {
+    cursor: not-allowed;
+  }
+  ::selection {
+    background: var(--primary-soft);
+    color: var(--text-primary);
+  }
+  input[type='date']::-webkit-calendar-picker-indicator {
+    cursor: pointer;
+    opacity: 0.7;
+  }
+  [data-theme='dark'] input[type='date']::-webkit-calendar-picker-indicator {
+    filter: invert(0.85);
+  }
+}
+
+/* ------------------------------------------------------------------------------------------
+   Utilitaires de marque
+   ------------------------------------------------------------------------------------------ */
+@utility bg-brand-gradient {
+  background-image: linear-gradient(135deg, #7b6cf0 0%, #6757e8 45%, #5443d6 100%);
+}
+@utility text-brand-gradient {
+  background-image: linear-gradient(120deg, var(--primary) 0%, var(--lavender) 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+@utility glass {
+  background: var(--glass);
+  border: 1px solid var(--glass-border);
+  backdrop-filter: blur(18px) saturate(140%);
+  -webkit-backdrop-filter: blur(18px) saturate(140%);
+}
+@utility halo-bg {
+  background-image:
+    radial-gradient(42rem 28rem at 12% -10%, var(--halo-1), transparent 60%),
+    radial-gradient(36rem 26rem at 100% 0%, var(--halo-2), transparent 62%);
+}
+@utility card {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-sm);
+}
+@utility safe-bottom {
+  padding-bottom: env(safe-area-inset-bottom);
+}
+@utility scrollbar-soft {
+  scrollbar-width: thin;
+  scrollbar-color: var(--border-strong) transparent;
+}
+
+/* ------------------------------------------------------------------------------------------
+   Motion design — llm.md 8 (micro 160–220 ms, surfaces 220–320 ms)
+   ------------------------------------------------------------------------------------------ */
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes rise-in {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes pop-in {
+  from { opacity: 0; transform: translateY(12px) scale(0.98); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes sheet-in {
+  from { transform: translateY(100%); }
+  to { transform: none; }
+}
+@keyframes drawer-in {
+  from { transform: translateX(100%); }
+  to { transform: none; }
+}
+@keyframes toast-in {
+  from { opacity: 0; transform: translateY(-8px) scale(0.98); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes float-slow {
+  0%, 100% { transform: translate3d(0, 0, 0); }
+  50% { transform: translate3d(0, -8px, 0); }
+}
+@keyframes glow-pulse {
+  0%, 100% { opacity: 0.55; }
+  50% { opacity: 0.85; }
+}
+@keyframes shimmer {
+  from { background-position: -240px 0; }
+  to { background-position: calc(240px + 100%) 0; }
+}
+
+@utility animate-fade-in {
+  animation: fade-in 220ms var(--ease-out-soft) both;
+}
+@utility animate-rise-in {
+  animation: rise-in 320ms var(--ease-out-soft) both;
+}
+@utility animate-pop-in {
+  animation: pop-in 280ms var(--ease-out-soft) both;
+}
+@utility animate-sheet-in {
+  animation: sheet-in 300ms var(--ease-out-soft) both;
+}
+@utility animate-drawer-in {
+  animation: drawer-in 300ms var(--ease-out-soft) both;
+}
+@utility animate-toast-in {
+  animation: toast-in 220ms var(--ease-out-soft) both;
+}
+@utility animate-float-slow {
+  animation: float-slow 7s ease-in-out infinite;
+}
+@utility animate-glow {
+  animation: glow-pulse 6s ease-in-out infinite;
+}
+
+.skeleton {
+  background-color: var(--bg-sunken);
+  background-image: linear-gradient(90deg, transparent 0, rgb(255 255 255 / 0.35) 50%, transparent 100%);
+  background-size: 240px 100%;
+  background-repeat: no-repeat;
+  animation: shimmer 1.3s ease-in-out infinite;
+  border-radius: 10px;
+}
+[data-theme='dark'] .skeleton {
+  background-image: linear-gradient(90deg, transparent 0, rgb(255 255 255 / 0.06) 50%, transparent 100%);
+}
+
+/* Apparition progressive des cartes (llm.md 8.1) — délai via --i. */
+.stagger > * {
+  animation: rise-in 320ms var(--ease-out-soft) both;
+  animation-delay: calc(min(var(--i, 0), 12) * 35ms);
+}
+
+/* Respect strict de prefers-reduced-motion : on conserve l'information, pas le mouvement. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 1ms !important;
+    animation-iteration-count: 1 !important;
+    animation-delay: 0ms !important;
+    transition-duration: 1ms !important;
+    scroll-behavior: auto !important;
+  }
+  .skeleton {
+    animation: none;
+  }
+}

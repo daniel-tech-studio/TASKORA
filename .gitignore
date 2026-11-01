@@ -1,0 +1,16 @@
+node_modules/
+dist/
+coverage/
+.env
+.env.local
+*.db
+*.db-wal
+*.db-shm
+*.db-journal
+backend/prisma/data/
+backend/backups/
+frontend/test-results/
+frontend/playwright-report/
+.DS_Store
+*.tsbuildinfo
+.claude/

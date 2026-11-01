@@ -1,0 +1,80 @@
+// TASKORA — schéma de données (backend.md section C).
+// SQLite : les statuts/priorités sont des chaînes validées par DTO/service
+// et contraintes CHECK dans la migration (backend.md F3).
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String    @id @default(uuid())
+  name         String
+  email        String    @unique
+  passwordHash String
+  timeZone     String    @default("UTC")
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  sessions     Session[]
+  tasks        Task[]
+}
+
+/// Une session = un appareil connecté = une famille de rotation de refresh tokens.
+model Session {
+  id               String                @id @default(uuid())
+  userId           String
+  user             User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  familyId         String                @default(uuid())
+  refreshTokenHash String                @unique
+  createdAt        DateTime              @default(now())
+  expiresAt        DateTime
+  revokedAt        DateTime?
+  lastUsedAt       DateTime?
+  history          RefreshTokenHistory[]
+
+  @@index([userId])
+  @@index([familyId])
+  @@index([expiresAt])
+}
+
+/// Empreintes (SHA-256) des refresh tokens déjà consommés : détection de réutilisation.
+model RefreshTokenHistory {
+  id         String   @id @default(uuid())
+  sessionId  String
+  session    Session  @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  tokenHash  String   @unique
+  consumedAt DateTime @default(now())
+  expiresAt  DateTime
+
+  @@index([sessionId])
+  @@index([expiresAt])
+}
+
+model Task {
+  id          String    @id @default(uuid())
+  ownerId     String
+  owner       User      @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  title       String
+  description String?
+  status      String    @default("TODO")
+  priority    String    @default("MEDIUM")
+  /// Date civile ISO YYYY-MM-DD (aucune heure, aucun fuseau).
+  dueDate     String?
+  /// Rang sémantique de priorité (LOW=1, MEDIUM=2, HIGH=3) pour un tri SQL correct.
+  priorityRank Int      @default(2)
+  /// Titre + description normalisés (minuscules, sans diacritiques) pour une recherche
+  /// insensible à la casse et aux accents (LIKE SQLite n'ignore la casse qu'en ASCII).
+  searchText  String    @default("")
+  /// Clé de tri alphabétique : titre normalisé (casse et accents ignorés).
+  titleSort   String    @default("")
+  completedAt DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([ownerId, status, createdAt])
+  @@index([ownerId, dueDate])
+}
