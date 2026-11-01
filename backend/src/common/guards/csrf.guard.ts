@@ -33,7 +33,7 @@ export class CsrfGuard implements CanActivate {
     if (SAFE_METHODS.has(req.method)) return true;
 
     const origin = this.requestOrigin(req);
-    if (!origin || !this.config.values.frontendOrigins.includes(origin)) {
+    if (!origin || !this.isAllowedOrigin(origin, req)) {
       return this.reject(req, 'origin');
     }
 
@@ -44,6 +44,13 @@ export class CsrfGuard implements CanActivate {
     const expected = this.tokens.csrfToken(seed, csrfBinding(req, this.cookies, this.tokens));
     if (!this.tokens.csrfMatches(expected, provided)) return this.reject(req, 'invalid_token');
     return true;
+  }
+
+  private isAllowedOrigin(origin: string, req: Request): boolean {
+    if (this.config.values.frontendOrigins.includes(origin)) return true;
+    // Requête same-origin : l'origine du navigateur est exactement l'hôte ciblé, tel que
+    // transmis par le proxy de confiance (X-Forwarded-Proto / X-Forwarded-Host).
+    return this.config.values.csrfAllowSameHost && origin === `${req.protocol}://${req.host}`;
   }
 
   private requestOrigin(req: Request): string | null {

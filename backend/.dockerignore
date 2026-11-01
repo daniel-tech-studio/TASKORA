@@ -1,0 +1,9 @@
+node_modules
+dist
+coverage
+backups
+prisma/data
+.env
+*.db
+*.db-*
+test

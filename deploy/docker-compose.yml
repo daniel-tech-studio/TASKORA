@@ -1,0 +1,55 @@
+# TASKORA — stack de production isolée : aucun port publié sur l'hôte.
+# Accès public uniquement via le tunnel Cloudflare (adresse *.trycloudflare.com).
+name: taskora
+
+x-logging: &logging
+  driver: json-file
+  options: { max-size: "10m", max-file: "3" }
+
+services:
+  api:
+    build: ../backend
+    image: taskora-api:latest
+    env_file: .env
+    environment:
+      NODE_ENV: production
+      PORT: "3000"
+      DATABASE_URL: file:/app/data/taskora.db
+      COOKIE_SECURE: "true"
+      TRUST_PROXY: "true"
+      CSRF_ALLOW_SAME_HOST: "true"
+      FRONTEND_ORIGIN: ""
+      SWAGGER_ENABLED: "false"
+      LOG_LEVEL: info
+    volumes:
+      - taskora-data:/app/data
+    networks: [taskora]
+    restart: unless-stopped
+    mem_limit: 512m
+    logging: *logging
+
+  web:
+    build: ../frontend
+    image: taskora-web:latest
+    depends_on:
+      api: { condition: service_healthy }
+    networks: [taskora]
+    restart: unless-stopped
+    mem_limit: 64m
+    logging: *logging
+
+  tunnel:
+    image: cloudflare/cloudflared:2026.10.7
+    command: tunnel --no-autoupdate --url http://web:80
+    depends_on:
+      web: { condition: service_healthy }
+    networks: [taskora]
+    restart: unless-stopped
+    mem_limit: 128m
+    logging: *logging
+
+networks:
+  taskora: {}
+
+volumes:
+  taskora-data: {}

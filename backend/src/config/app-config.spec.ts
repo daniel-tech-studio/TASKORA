@@ -30,6 +30,14 @@ describe('loadConfig', () => {
     expect(() => loadConfig({ ...valid, ...override })).toThrow(message);
   });
 
+  it('mode même hôte : liste d’origines facultative, proxy de confiance exigé', () => {
+    const config = loadConfig({ ...valid, FRONTEND_ORIGIN: '', CSRF_ALLOW_SAME_HOST: 'true', TRUST_PROXY: 'true' });
+    expect(config.frontendOrigins).toEqual([]);
+    expect(config.csrfAllowSameHost).toBe(true);
+    expect(() => loadConfig({ ...valid, CSRF_ALLOW_SAME_HOST: 'true' })).toThrow(/TRUST_PROXY/);
+    expect(() => loadConfig({ ...valid, FRONTEND_ORIGIN: '' })).toThrow(/FRONTEND_ORIGIN/);
+  });
+
   it('production : cookies sécurisés par défaut et Swagger désactivé', () => {
     const config = loadConfig({ ...valid, NODE_ENV: 'production', FRONTEND_ORIGIN: 'https://taskora.example' });
     expect(config.cookieSecure).toBe(true);

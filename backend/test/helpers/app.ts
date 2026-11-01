@@ -42,6 +42,9 @@ export async function createTestApp(): Promise<TestApp> {
   const app = moduleRef.createNestApplication<NestExpressApplication>({ bodyParser: false });
   setupApp(app);
   await app.init();
+  // Un seul port d'écoute pour toute la suite : sinon supertest ouvre un port éphémère
+  // par requête, source de collisions intermittentes (réponses non HTTP).
+  await app.listen(0, '127.0.0.1');
   return { app, clock, prisma: app.get(PrismaService), close: () => app.close() };
 }
 
@@ -54,6 +57,8 @@ export class Client {
   readonly cookies = new Map<string, string>();
   csrf: string | null = null;
   origin: string | null = ORIGIN;
+  /** En-têtes ajoutés à chaque requête (ex. X-Forwarded-* d'un proxy). */
+  headers: Record<string, string> = {};
 
   constructor(private readonly app: NestExpressApplication) {}
 
@@ -81,13 +86,13 @@ export class Client {
   }
 
   get(path: string): request.Test {
-    const req = request(this.app.getHttpServer()).get(`/api/v1${path}`).set('Cookie', this.cookieHeader());
+    const req = request(this.app.getHttpServer()).get(`/api/v1${path}`).set('Cookie', this.cookieHeader()).set(this.headers);
     return req.on('response', (res: request.Response) => this.absorb(res)) as request.Test;
   }
 
   async send(method: 'post' | 'patch' | 'delete', path: string, body?: object, opts: { csrf?: string | null } = {}) {
     const token = opts.csrf !== undefined ? opts.csrf : (this.csrf ?? (await this.refreshCsrf()));
-    let req = request(this.app.getHttpServer())[method](`/api/v1${path}`).set('Cookie', this.cookieHeader());
+    let req = request(this.app.getHttpServer())[method](`/api/v1${path}`).set('Cookie', this.cookieHeader()).set(this.headers);
     if (this.origin) req = req.set('Origin', this.origin);
     if (token) req = req.set('X-CSRF-Token', token);
     const res = await (body !== undefined ? req.send(body) : req);

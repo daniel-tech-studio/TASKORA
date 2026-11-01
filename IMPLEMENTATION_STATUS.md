@@ -40,17 +40,25 @@ Les fonctionnalités V1 de `llm.md` et `backend.md` sont implémentées et véri
 | DOC-001 | README, `.env.example` | DONE | — |
 | AUDIT-001 | Audit de conformité | DONE | `IMPLEMENTATION_TRACEABILITY.md` |
 
+## Déploiement (1er novembre 2026)
+- VPS `souven` (Ubuntu 26.04, Docker 29) : stack Compose `taskora` dans `~/apps/taskora`, réseau et volume dédiés, **aucun port publié**.
+- Accès public via tunnel Cloudflare rapide (`*.trycloudflare.com`, adresse variable à chaque redémarrage du tunnel — voir README §14).
+- Vérifié en HTTPS public : inscription, cookies `__Host-` Secure/HttpOnly, création/stats/suppression de tâche, refus d'une origine étrangère, déconnexion, Swagger désactivé, CSP par empreinte sans violation dans le navigateur. Applications existantes du VPS restées en service.
+- Un compte de vérification `smoke-…@exemple.test` (sans tâche) a été créé en production par le test de fumée.
+
 ## Dernière exécution des tests (1er novembre 2026)
 | Suite | Commande | Résultat |
 |---|---|---|
-| Backend unitaires + intégration | `cd backend && npm test` | 30/30 |
-| Backend E2E API | `cd backend && npm run test:e2e` | 51/51 |
+| Backend unitaires + intégration | `cd backend && npm test` | 31/31 |
+| Backend E2E API | `cd backend && npm run test:e2e` | 56/56 (stable sur 6 exécutions) |
 | Backend lint + typecheck | `npm run lint && npm run typecheck` | OK |
 | Frontend unitaires | `cd frontend && npm test` | 13/13 |
 | Frontend Playwright | `cd frontend && npm run test:e2e` | 18/18 (+2 captures) |
 | Frontend lint + typecheck + build | `npm run lint && npm run typecheck && npm run build` | OK |
 
 ## Défauts trouvés et corrigés pendant la recette
+- Échecs intermittents des tests E2E (réponses non HTTP, statut 501 parasite) : supertest ouvrait un port éphémère par requête → application de test à l'écoute une seule fois.
+- `npm run build` du frontend échouait (types DOM absents pour les tests Playwright) → corrigé, révélé par le build Docker.
 - Tri alphabétique sensible aux accents → colonne `titleSort` normalisée (migration 2).
 - Une migration Prisma générée supprimait les contraintes CHECK → réécrite en `ALTER TABLE ADD COLUMN`.
 - Retour à la destination initiale court-circuité après connexion ; puis conservé à tort après déconnexion volontaire → corrigés.
@@ -62,10 +70,7 @@ Les fonctionnalités V1 de `llm.md` et `backend.md` sont implémentées et véri
 - Recette exécutée sous Node 23.9 (non LTS) ; Node 22 LTS non testé.
 - Navigateurs : Chromium uniquement (pas de Firefox/Safari). Zoom 200 % et lecteur d'écran réel non testés manuellement.
 - Pas de glisser-déposer au clavier : l'alternative accessible exigée est le sélecteur de statut (testé).
-- Docker non fourni (facultatif selon backend.md) ; aucun déploiement de production effectué.
-- Un statut HTTP 501 est apparu une seule fois dans un test de fuseau invalide lors d'une exécution complète ; non reproduit lors des exécutions complètes suivantes (toutes vertes).
 - La base de développement `backend/prisma/data/dev.db` contient le compte de démonstration, un compte de test créé pendant la recette manuelle (`awa2@ex.com`) et une tâche « Tester le parcours complet ».
-- Le dépôt n'est pas encore sous Git.
 
 ## Prochaines actions possibles
 - Initialiser Git et committer (les migrations et lockfiles doivent être versionnés).

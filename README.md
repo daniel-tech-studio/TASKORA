@@ -31,7 +31,8 @@ Une application web de gestion **personnelle** de tâches : claire, élégante, 
 11. [Modèle de données](#11-modèle-de-données)
 12. [Tests et qualité](#12-tests-et-qualité)
 13. [Exploitation : scripts, sauvegarde, mise en production](#13-exploitation--scripts-sauvegarde-mise-en-production)
-14. [Documents du projet](#14-documents-du-projet)
+14. [Déploiement Docker + tunnel Cloudflare](#14-déploiement-docker--tunnel-cloudflare)
+15. [Documents du projet](#15-documents-du-projet)
 
 ---
 
@@ -373,7 +374,7 @@ Le Kanban n'a pas d'API dédiée : trois appels `GET /tasks?status=…` paginés
 | Tout le back + front unitaire | `npm test` (racine) | — |
 | Qualité statique | `npm run lint` et `npm run typecheck` dans chaque dossier | ESLint + TypeScript strict |
 
-Dernière exécution : **30 + 51** tests backend, **13** tests frontend et **18** parcours Playwright, tous réussis. Détails dans [`IMPLEMENTATION_STATUS.md`](IMPLEMENTATION_STATUS.md).
+Dernière exécution : **31 + 56** tests backend, **13** tests frontend et **18** parcours Playwright, tous réussis. Détails dans [`IMPLEMENTATION_STATUS.md`](IMPLEMENTATION_STATUS.md).
 
 Régénérer les captures de ce README :
 
@@ -411,7 +412,51 @@ Playwright utilise Chromium ; s'il n'est pas installé : `npx playwright install
 4. `npm run db:deploy` avant chaque démarrage d'une nouvelle version ; base sur un volume persistant ; sauvegardes régulières hors de la machine.
 5. **Une seule instance** de l'API (SQLite et limitation en mémoire ne se partagent pas entre plusieurs serveurs).
 
-## 14. Documents du projet
+## 14. Déploiement Docker + tunnel Cloudflare
+
+TASKORA est déployé sur un VPS dans un **environnement Docker dédié** (`deploy/docker-compose.yml`, projet Compose `taskora`) :
+
+```mermaid
+flowchart LR
+  U[Navigateur] -- HTTPS --> CF[Cloudflare<br/>*.trycloudflare.com]
+  CF -- tunnel sortant --> T[cloudflared]
+  subgraph VPS — réseau Docker « taskora » isolé, aucun port publié
+    T --> W[web : nginx<br/>interface + /api]
+    W --> A[api : NestJS]
+    A --> V[(volume taskora-data<br/>SQLite)]
+  end
+```
+
+- **Aucun port n'est ouvert sur le serveur** : le conteneur `cloudflared` établit une connexion sortante vers Cloudflare, qui fournit l'adresse HTTPS publique gratuite. Les autres applications du VPS ne sont pas affectées.
+- `web` (nginx) sert l'interface, ajoute les en-têtes de sécurité (CSP par empreinte, HSTS, X-Frame-Options…) et proxifie `/api` vers `api`.
+- `api` applique les migrations au démarrage (`prisma migrate deploy`), en production stricte : cookies `__Host-` sécurisés, Swagger désactivé, origine vérifiée contre l'hôte transmis par le proxy (`CSRF_ALLOW_SAME_HOST`), secrets générés sur le serveur dans `deploy/.env` (jamais versionnés).
+- Limites mémoire : api 512 Mo, web 64 Mo, tunnel 128 Mo ; journaux limités en taille.
+
+### Déployer ou mettre à jour
+
+Depuis votre ordinateur (accès SSH à l'hôte `souven` configuré dans `~/.ssh/config`) :
+
+```bash
+./deploy/deploy.sh souven
+```
+
+Le script envoie le code dans `~/apps/taskora`, génère les secrets au premier déploiement, construit les images sur le serveur, redémarre la stack et affiche l'adresse publique. Les données (volume `taskora-data`) sont conservées entre les mises à jour.
+
+### Commandes utiles sur le serveur (`cd ~/apps/taskora/deploy`)
+
+| Besoin | Commande |
+|---|---|
+| Adresse publique actuelle | `./url.sh` |
+| État des conteneurs | `docker compose ps` |
+| Journaux | `docker compose logs -f api` (ou `web`, `tunnel`) |
+| Sauvegarde de la base | `docker compose exec api node docker/backup.cjs` (fichier dans le volume, dossier `backups/`) |
+| Copier une sauvegarde hors du conteneur | `docker compose cp api:/app/data/backups ./backups` |
+| Redémarrer | `docker compose restart` |
+| Arrêter | `docker compose down` (les données restent dans le volume) |
+
+> ⚠️ **Adresse trycloudflare :** gratuite et sans compte, mais **elle change à chaque redémarrage du tunnel** (redémarrage du conteneur ou du serveur) et Cloudflare la destine aux tests, sans garantie de disponibilité. Après un redémarrage, récupérez la nouvelle adresse avec `./url.sh`. Les comptes et tâches sont conservés. Pour une adresse fixe, utiliser un tunnel nommé Cloudflare avec un domaine géré par Cloudflare.
+
+## 15. Documents du projet
 
 | Document | Contenu |
 |---|---|

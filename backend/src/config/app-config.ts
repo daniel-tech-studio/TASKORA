@@ -17,6 +17,8 @@ export interface AppConfigValues {
   refreshTokenTtlSeconds: number;
   refreshReuseGraceSeconds: number;
   frontendOrigins: string[];
+  /** Accepte aussi l'origine identique à l'hôte ciblé (déploiement derrière un proxy de confiance à URL variable). */
+  csrfAllowSameHost: boolean;
   cookieSecure: boolean;
   logLevel: 'debug' | 'info' | 'warn' | 'error' | 'silent';
   swaggerEnabled: boolean;
@@ -89,7 +91,8 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): AppConfigValue
   const databaseUrl = str('DATABASE_URL');
   if (databaseUrl && !databaseUrl.startsWith('file:')) problems.push('DATABASE_URL doit désigner un fichier SQLite (file:...)');
 
-  const frontendOrigins = str('FRONTEND_ORIGIN')
+  const csrfAllowSameHost = bool('CSRF_ALLOW_SAME_HOST', false);
+  const frontendOrigins = str('FRONTEND_ORIGIN', csrfAllowSameHost ? '' : undefined)
     .split(',')
     .map((o) => o.trim())
     .filter(Boolean);
@@ -119,6 +122,7 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): AppConfigValue
     refreshTokenTtlSeconds: int('REFRESH_TOKEN_TTL_SECONDS', 604800),
     refreshReuseGraceSeconds: int('REFRESH_REUSE_GRACE_SECONDS', 10, 0, 60),
     frontendOrigins,
+    csrfAllowSameHost,
     cookieSecure,
     logLevel,
     swaggerEnabled: bool('SWAGGER_ENABLED', nodeEnv !== 'production'),
@@ -131,6 +135,9 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): AppConfigValue
     },
   };
 
+  if (csrfAllowSameHost && !config.trustProxy) {
+    problems.push('CSRF_ALLOW_SAME_HOST=true exige TRUST_PROXY=true (hôte et protocole transmis par le proxy)');
+  }
   if (config.jwtAccessSecret && config.jwtAccessSecret === config.csrfSecret) {
     problems.push('JWT_ACCESS_SECRET et CSRF_SECRET doivent être différents');
   }
